@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: speech-nandy-io
+  labels:
+    app: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      serviceAccount: api
+      volumes:
+      - name: subscriptions
+        configMap:
+          name: subscriptions
+      containers:
+      - name: api
+        image: docker.io/nandyio/speech-api:0.1
+        imagePullPolicy: Always
+        env:
+        - name: REDIS_CHANNEL
+          value: nandy.io/speech
+        volumeMounts:
+        - name: subscriptions
+          mountPath: /opt/nandy-io/subscriptions
+        ports:
+        - containerPort: 80
+        readinessProbe:
+          initialDelaySeconds: 5
+          httpGet:
+            path: /health
+            port: 80
+        livenessProbe:
+          initialDelaySeconds: 2
+          periodSeconds: 5
+          httpGet:
+            path: /health
+            port: 80
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: api
+  namespace: speech-nandy-io
+spec:
+  selector:
+    app: api
+  type: LoadBalancer
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: 80

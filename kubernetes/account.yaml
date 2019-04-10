@@ -1,0 +1,27 @@
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: api
+  namespace: speech-nandy-io
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: speech-nandy-io-api
+rules:
+- apiGroups: [""]
+  resources: ["nodes"]
+  verbs: ["get", "watch", "list"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: speech-nandy-io-api
+subjects:
+- kind: ServiceAccount
+  name: api
+  namespace: speech-nandy-io
+roleRef:
+  kind: ClusterRole
+  name: speech-nandy-io-api
+  apiGroup: rbac.authorization.k8s.io

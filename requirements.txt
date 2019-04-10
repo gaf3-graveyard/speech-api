@@ -1,0 +1,7 @@
+flask==1.0.2
+flask_restful==0.3.7
+PyYAML==5.1
+redis==2.10.6
+git+https://github.com/gaf3/opengui.git@827c4042282ff42e24523c3542d9925c296da1d1#egg=opengui
+git+https://github.com/klot-io/pykube.git@fresh-start#egg=pykube
+coverage==4.5.1
