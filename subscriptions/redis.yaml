@@ -1,2 +1,2 @@
-host: db.redis-klot-io
+host: host.docker.internal
 port: 6379

@@ -47,7 +47,7 @@ class TestService(unittest.TestCase):
         mock_exists.return_value = True
         app = service.app()
 
-        self.assertEqual(app.redis.host, "db.redis-klot-io")
+        self.assertEqual(app.redis.host, "host.docker.internal")
         self.assertEqual(app.redis.port, 6379)
         self.assertEqual(app.channel, "stuff")
 
