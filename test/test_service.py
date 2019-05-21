@@ -24,6 +24,8 @@ class MockRedis(object):
 class TestService(unittest.TestCase):
 
     @unittest.mock.patch.dict(os.environ, {
+        "REDIS_HOST": "most.com",
+        "REDIS_PORT": "667",
         "REDIS_CHANNEL": "stuff"
     })
     @unittest.mock.patch("redis.StrictRedis", MockRedis)
@@ -35,6 +37,8 @@ class TestService(unittest.TestCase):
         self.api = self.app.test_client()
 
     @unittest.mock.patch.dict(os.environ, {
+        "REDIS_HOST": "most.com",
+        "REDIS_PORT": "667",
         "REDIS_CHANNEL": "stuff"
     })
     @unittest.mock.patch("redis.StrictRedis", MockRedis)
@@ -47,8 +51,8 @@ class TestService(unittest.TestCase):
         mock_exists.return_value = True
         app = service.app()
 
-        self.assertEqual(app.redis.host, "host.docker.internal")
-        self.assertEqual(app.redis.port, 6379)
+        self.assertEqual(app.redis.host, "most.com")
+        self.assertEqual(app.redis.port, 667)
         self.assertEqual(app.channel, "stuff")
 
         mock_exists.assert_called_once_with("/opt/nandy-io/secret/config")

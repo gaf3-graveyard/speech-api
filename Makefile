@@ -1,12 +1,13 @@
 ACCOUNT=nandyio
 IMAGE=speech-api
 VERSION=0.1
-VARIABLES=-e REDIS_CHANNEL=nandy.io/speech
-VOLUMES=-v ${PWD}/subscriptions/:/opt/nandy-io/subscriptions/ \
-		-v ${PWD}/secret/:/opt/nandy-io/secret/ \
+VOLUMES=-v ${PWD}/secret/:/opt/nandy-io/secret/ \
 		-v ${PWD}/lib/:/opt/nandy-io/lib/ \
 		-v ${PWD}/test/:/opt/nandy-io/test/ \
 		-v ${PWD}/bin/:/opt/nandy-io/bin/
+ENVIRONMENT=-e REDIS_HOST=host.docker.internal \
+			-e REDIS_PORT=6379 \
+			-e REDIS_CHANNEL=nandy.io/speech
 PORT=8365
 
 .PHONY: cross build kubectl shell test run push install update reset remove
@@ -27,10 +28,10 @@ test:
 	docker run -it $(VOLUMES) $(ACCOUNT)/$(IMAGE):$(VERSION) sh -c "coverage run -m unittest discover -v test && coverage report -m --include lib/*.py"
 
 run:
-	docker run --rm $(VARIABLES) $(VOLUMES) -p 127.0.0.1:$(PORT):80 -h $(IMAGE) $(ACCOUNT)/$(IMAGE):$(VERSION)
+	docker run --rm $(VOLUMES) $(ENVIRONMENT) -p 127.0.0.1:$(PORT):80 -h $(IMAGE) $(ACCOUNT)/$(IMAGE):$(VERSION)
 
 start:
-	docker run -d --name $(ACCOUNT)-$(IMAGE)-$(VERSION) $(VARIABLES) $(VOLUMES) -p 127.0.0.1:$(PORT):80 -h $(IMAGE) $(ACCOUNT)/$(IMAGE):$(VERSION)
+	docker run -d --name $(ACCOUNT)-$(IMAGE)-$(VERSION) $(VOLUMES) $(ENVIRONMENT) -p 127.0.0.1:$(PORT):80 -h $(IMAGE) $(ACCOUNT)/$(IMAGE):$(VERSION)
 
 stop:
 	docker rm -f $(ACCOUNT)-$(IMAGE)-$(VERSION)
