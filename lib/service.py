@@ -14,15 +14,13 @@ def app():
 
     app = flask.Flask("nandy-io-speech-api")
 
-    app.kube = None
-
     app.redis = redis.StrictRedis(host=os.environ['REDIS_HOST'], port=int(os.environ['REDIS_PORT']))
     app.channel = os.environ['REDIS_CHANNEL']
 
-    if os.path.exists("/opt/nandy-io/secret/config"):
-        app.kube = pykube.HTTPClient(pykube.KubeConfig.from_file("/opt/nandy-io/secret/config"))
-    else:
+    if os.path.exists("/var/run/secrets/kubernetes.io/serviceaccount/token"):
         app.kube = pykube.HTTPClient(pykube.KubeConfig.from_service_account())
+    else:
+        app.kube = pykube.HTTPClient(pykube.KubeConfig.from_url("http://host.docker.internal:7580"))
 
     api = flask_restful.Api(app)
 

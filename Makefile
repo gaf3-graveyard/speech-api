@@ -1,16 +1,17 @@
 ACCOUNT=nandyio
 IMAGE=speech-api
 VERSION=0.1
-VOLUMES=-v ${PWD}/secret/:/opt/nandy-io/secret/ \
-		-v ${PWD}/lib/:/opt/nandy-io/lib/ \
+NAME=$(IMAGE)-$(ACCOUNT)
+NETWORK=klot-io
+VOLUMES=-v ${PWD}/lib/:/opt/nandy-io/lib/ \
 		-v ${PWD}/test/:/opt/nandy-io/test/ \
 		-v ${PWD}/bin/:/opt/nandy-io/bin/
-ENVIRONMENT=-e REDIS_HOST=host.docker.internal \
+ENVIRONMENT=-e REDIS_HOST=redis-klotio \
 			-e REDIS_PORT=6379 \
 			-e REDIS_CHANNEL=nandy.io/speech
 PORT=8365
 
-.PHONY: cross build kubectl shell test run push install update reset remove
+.PHONY: cross build kubectl network shell test start stop push install update remove reset
 
 cross:
 	docker run --rm --privileged multiarch/qemu-user-static:register --reset
@@ -18,20 +19,29 @@ cross:
 build:
 	docker build . -t $(ACCOUNT)/$(IMAGE):$(VERSION)
 
-kubectl:
-	cp ~/.kube/config secret/
+network:
+	-docker network create $(NETWORK)
 
-shell:
-	docker run -it $(VOLUMES) $(ACCOUNT)/$(IMAGE):$(VERSION) sh
+shell: network
+	-pkill kubectl
+	kubectl proxy --port=7580 --accept-hosts='.*' &
+	-docker run -it --rm --name=$(NAME) --network=$(NETWORK) $(VOLUMES) $(ENVIRONMENT) $(ACCOUNT)/$(IMAGE):$(VERSION) sh
+	pkill kubectl
 
 test:
 	docker run -it $(VOLUMES) $(ACCOUNT)/$(IMAGE):$(VERSION) sh -c "coverage run -m unittest discover -v test && coverage report -m --include lib/*.py"
 
-run:
-	docker run --rm $(VOLUMES) $(ENVIRONMENT) -p 127.0.0.1:$(PORT):80 -h $(IMAGE) $(ACCOUNT)/$(IMAGE):$(VERSION)
+run: network
+	-pkill kubectl
+	kubectl proxy --port=7580 --accept-hosts='.*' &
+	docker run --rm --name=$(NAME) --network=$(NETWORK) $(VOLUMES) $(ENVIRONMENT) -p 127.0.0.1:$(PORT):80 --expose=80 $(ACCOUNT)/$(IMAGE):$(VERSION)
+	pkill kubectl
 
-start:
-	docker run -d --name $(ACCOUNT)-$(IMAGE)-$(VERSION) $(VOLUMES) $(ENVIRONMENT) -p 127.0.0.1:$(PORT):80 -h $(IMAGE) $(ACCOUNT)/$(IMAGE):$(VERSION)
+start: network
+	-pkill kubectl
+	kubectl proxy --port=7580 --accept-hosts='.*' &
+	docker run -d --name=$(NAME) --network=$(NETWORK) $(VOLUMES) $(ENVIRONMENT) -p 127.0.0.1:$(PORT):80 --expose=80 $(ACCOUNT)/$(IMAGE):$(VERSION)
+	pkill kubectl
 
 stop:
 	docker rm -f $(ACCOUNT)-$(IMAGE)-$(VERSION)
