@@ -11,7 +11,7 @@ ENVIRONMENT=-e REDIS_HOST=redis-klotio \
 			-e REDIS_CHANNEL=nandy.io/speech
 PORT=8365
 
-.PHONY: cross build kubectl network shell test start stop push install update remove reset
+.PHONY: cross build kube network shell test start stop push install update remove reset
 
 cross:
 	docker run --rm --privileged multiarch/qemu-user-static:register --reset
@@ -19,32 +19,27 @@ cross:
 build:
 	docker build . -t $(ACCOUNT)/$(IMAGE):$(VERSION)
 
+kube:
+	-kubectl proxy --address=127.0.0.1 --port=7580 --accept-hosts='.*' &
+
 network:
 	-docker network create $(NETWORK)
 
-shell: network
-	-pkill kubectl
-	kubectl proxy --port=7580 --accept-hosts='.*' &
+shell: kube network
 	-docker run -it --rm --name=$(NAME) --network=$(NETWORK) $(VOLUMES) $(ENVIRONMENT) $(ACCOUNT)/$(IMAGE):$(VERSION) sh
-	pkill kubectl
 
 test:
 	docker run -it $(VOLUMES) $(ACCOUNT)/$(IMAGE):$(VERSION) sh -c "coverage run -m unittest discover -v test && coverage report -m --include lib/*.py"
 
-run: network
-	-pkill kubectl
-	kubectl proxy --port=7580 --accept-hosts='.*' &
+run: kube network
 	docker run --rm --name=$(NAME) --network=$(NETWORK) $(VOLUMES) $(ENVIRONMENT) -p 127.0.0.1:$(PORT):80 --expose=80 $(ACCOUNT)/$(IMAGE):$(VERSION)
-	pkill kubectl
 
-start: network
-	-pkill kubectl
-	kubectl proxy --port=7580 --accept-hosts='.*' &
+start: kube network
 	docker run -d --name=$(NAME) --network=$(NETWORK) $(VOLUMES) $(ENVIRONMENT) -p 127.0.0.1:$(PORT):80 --expose=80 $(ACCOUNT)/$(IMAGE):$(VERSION)
-	pkill kubectl
 
 stop:
-	docker rm -f $(ACCOUNT)-$(IMAGE)-$(VERSION)
+	docker rm -f $(NAME)
+	-pkill kubectl
 
 push:
 	docker push $(ACCOUNT)/$(IMAGE):$(VERSION)
