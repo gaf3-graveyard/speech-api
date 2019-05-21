@@ -2,7 +2,7 @@ ACCOUNT=nandyio
 IMAGE=speech-api
 VERSION=0.1
 NAME=$(IMAGE)-$(ACCOUNT)
-NETWORK=klot-io
+NETWORK=klot.io
 VOLUMES=-v ${PWD}/lib/:/opt/nandy-io/lib/ \
 		-v ${PWD}/test/:/opt/nandy-io/test/ \
 		-v ${PWD}/bin/:/opt/nandy-io/bin/
@@ -39,7 +39,6 @@ start: kube network
 
 stop:
 	docker rm -f $(NAME)
-	-pkill kubectl
 
 push:
 	docker push $(ACCOUNT)/$(IMAGE):$(VERSION)
