@@ -29,6 +29,7 @@ class TestService(unittest.TestCase):
         "REDIS_CHANNEL": "stuff"
     })
     @unittest.mock.patch("redis.StrictRedis", MockRedis)
+    @unittest.mock.patch("os.path.exists", unittest.mock.MagicMock(return_value=True))
     @unittest.mock.patch("pykube.HTTPClient", unittest.mock.MagicMock)
     @unittest.mock.patch("pykube.KubeConfig.from_service_account", unittest.mock.MagicMock)
     def setUp(self):
@@ -45,8 +46,9 @@ class TestService(unittest.TestCase):
     @unittest.mock.patch("os.path.exists")
     @unittest.mock.patch("pykube.KubeConfig.from_file")
     @unittest.mock.patch("pykube.KubeConfig.from_service_account")
+    @unittest.mock.patch("pykube.KubeConfig.from_url")
     @unittest.mock.patch("pykube.HTTPClient", unittest.mock.MagicMock)
-    def test_app(self, mock_account, mock_file, mock_exists):
+    def test_app(self, mock_url, mock_account, mock_file, mock_exists):
 
         mock_exists.return_value = True
         app = service.app()
@@ -55,14 +57,13 @@ class TestService(unittest.TestCase):
         self.assertEqual(app.redis.port, 667)
         self.assertEqual(app.channel, "stuff")
 
-        mock_exists.assert_called_once_with("/opt/nandy-io/secret/config")
-        mock_file.assert_called_once_with("/opt/nandy-io/secret/config")
+        mock_exists.assert_called_once_with("/var/run/secrets/kubernetes.io/serviceaccount/token")
+        mock_account.assert_called_once()
 
         mock_exists.return_value = False
         app = service.app()
 
-        mock_file.assert_called_once_with("/opt/nandy-io/secret/config")
-        mock_account.assert_called_once()
+        mock_url.assert_called_once_with("http://host.docker.internal:7580")
 
     def test_health(self):
 
