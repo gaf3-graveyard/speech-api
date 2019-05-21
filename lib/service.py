@@ -16,10 +16,7 @@ def app():
 
     app.kube = None
 
-    with open("/opt/nandy-io/subscriptions/redis.yaml", "r") as redis_file:
-        redis_config = yaml.safe_load(redis_file)
-
-    app.redis = redis.StrictRedis(host=redis_config["host"], port=redis_config["port"])
+    app.redis = redis.StrictRedis(host=os.environ['REDIS_HOST'], port=int(os.environ['REDIS_PORT']))
     app.channel = os.environ['REDIS_CHANNEL']
 
     if os.path.exists("/opt/nandy-io/secret/config"):
