@@ -23,6 +23,8 @@ class MockRedis(object):
 
 class TestService(unittest.TestCase):
 
+    maxDiff = None
+
     @unittest.mock.patch.dict(os.environ, {
         "REDIS_HOST": "most.com",
         "REDIS_PORT": "667",
@@ -196,7 +198,7 @@ class TestService(unittest.TestCase):
                     },
                     "default": "en-US",
                     "style": "select",
-                    "errors": ["missing value"]
+                    "value": "en-US"
                 },
                 {
                     "name": "node",
@@ -267,7 +269,7 @@ class TestService(unittest.TestCase):
                     },
                     "default": "en-US",
                     "style": "select",
-                    "errors": ["missing value"]
+                    "value": "en-US"
                 },
                 {
                     "name": "node",
