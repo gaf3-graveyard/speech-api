@@ -11,7 +11,7 @@ ENVIRONMENT=-e REDIS_HOST=redis-klotio \
 			-e REDIS_CHANNEL=nandy.io/speech
 PORT=8365
 
-.PHONY: cross build kube network shell test start stop push install update remove reset
+.PHONY: cross build kube network shell test run start stop push install update remove reset
 
 cross:
 	docker run --rm --privileged multiarch/qemu-user-static:register --reset
